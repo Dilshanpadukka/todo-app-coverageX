@@ -1,0 +1,104 @@
+services:
+  # MySQL Database Service
+  database:
+    image: mysql:8.0
+    container_name: todo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: todo_coveragex
+      MYSQL_USER: todo_user
+      MYSQL_PASSWORD: todo_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    networks:
+      - todo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Spring Boot Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todo-backend
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/todo_coveragex?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: todo_user
+      SPRING_DATASOURCE_PASSWORD: todo_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      
+      # JPA/Hibernate configuration
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
+      
+      # Application configuration
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: docker
+      
+      # Logging configuration
+      LOGGING_LEVEL_COM_DILSHAN_COVERAGEX: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: WARN
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - todo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # React.js Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: todo-frontend
+    restart: unless-stopped
+    environment:
+      # API configuration - uses relative path since Nginx proxies /api to backend
+      # This allows the frontend to work both in Docker and locally
+      VITE_API_BASE_URL: /api
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - todo-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# Named volumes for data persistence
+volumes:
+  mysql_data:
+    driver: local
+
+# Custom network for service communication
+networks:
+  todo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

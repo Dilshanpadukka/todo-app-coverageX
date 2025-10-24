@@ -212,7 +212,7 @@ export const Dashboard: React.FC = () => {
             mb={3}
           >
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Recent Tasks
+              Tasks List
             </Typography>
 
             <Button

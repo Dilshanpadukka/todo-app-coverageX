@@ -2,7 +2,7 @@
  * Dashboard statistics cards component
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Grid,
   Card,
@@ -17,6 +17,7 @@ import {
   PlayArrow as ActiveIcon,
   CheckCircle as CompletedIcon,
   TrendingUp as TrendIcon,
+  AccessTime as ClockIcon,
 } from '@mui/icons-material';
 import { formatNumber, calculatePercentage } from '@/utils/helpers';
 import type { TaskStatisticsResponseDTO } from '@/types/api';
@@ -69,7 +70,7 @@ const StatCard: React.FC<StatCardProps> = ({
             >
               {title}
             </Typography>
-            
+
             <Typography
               variant="h4"
               component="div"
@@ -81,13 +82,13 @@ const StatCard: React.FC<StatCardProps> = ({
             >
               {formatNumber(value)}
             </Typography>
-            
+
             {subtitle && (
               <Typography variant="body2" color="text.secondary">
                 {subtitle}
               </Typography>
             )}
-            
+
             {trend && (
               <Box display="flex" alignItems="center" mt={1}>
                 <TrendIcon
@@ -110,7 +111,7 @@ const StatCard: React.FC<StatCardProps> = ({
               </Box>
             )}
           </Box>
-          
+
           <Box
             sx={{
               width: 56,
@@ -140,11 +141,94 @@ const StatCardSkeleton: React.FC = () => (
           <Skeleton variant="text" width="40%" height={32} sx={{ my: 1 }} />
           <Skeleton variant="text" width="50%" height={16} />
         </Box>
-        <Skeleton variant="rectangular" width={56} height={56} sx={{ borderRadius: 2 }} />
+        <Skeleton
+          variant="rectangular"
+          width={56}
+          height={56}
+          sx={{ borderRadius: 2 }}
+        />
       </Box>
     </CardContent>
   </Card>
 );
+
+const ClockCard: React.FC = () => {
+  const theme = useTheme();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  return (
+    <Card
+      sx={{
+        height: '100%',
+        transition: 'transform 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: theme.shadows[8],
+        },
+      }}
+    >
+      <CardContent>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="100%"
+        >
+          <Typography
+            variant="h3"
+            component="div"
+            sx={{
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              mb: 1,
+              textAlign: 'center',
+              color: theme.palette.text.primary,
+            }}
+          >
+            {formatTime(currentTime)}
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              textAlign: 'center',
+              color: theme.palette.text.secondary,
+            }}
+          >
+            {formatDate(currentTime)}
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
 
 export const StatsCards: React.FC<StatsCardsProps> = ({
   statistics,
@@ -171,13 +255,6 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
 
   const stats = [
     {
-      title: 'Total Tasks',
-      value: statistics.totalTasks,
-      icon: <TotalIcon fontSize="large" />,
-      color: theme.palette.primary.main,
-      subtitle: 'All time',
-    },
-    {
       title: 'Active Tasks',
       value: statistics.activeTasks,
       icon: <ActiveIcon fontSize="large" />,
@@ -202,6 +279,9 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
 
   return (
     <Grid container spacing={3}>
+      <Grid item xs={12} sm={6} md={3}>
+        <ClockCard />
+      </Grid>
       {stats.map((stat, index) => (
         <Grid item xs={12} sm={6} md={3} key={index}>
           <StatCard {...stat} />

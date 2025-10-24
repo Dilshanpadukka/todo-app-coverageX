@@ -1,7 +1,3 @@
-/**
- * Task board component that groups tasks into status columns
- */
-
 import React from 'react';
 import { Box, Grid, Typography, Paper, Chip, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -65,6 +61,11 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
   onClearSearch,
 }) => {
   const theme = useTheme();
+
+
+  const VISIBLE_ROWS = 5;
+  const ROW_HEIGHT_PX = 72;
+  const containerMaxHeight = VISIBLE_ROWS * ROW_HEIGHT_PX;
 
   // Initial loading state
   if (loading && !tasks) {
@@ -149,32 +150,43 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
                   />
                 </Box>
 
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {columnTasks.length > 0 ? (
-                    columnTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onEdit={onTaskEdit}
-                        onDelete={onTaskDelete}
-                        onStatusChange={onTaskStatusChange}
-                        onView={onTaskView}
-                      />
-                    ))
-                  ) : (
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: 1,
-                        backgroundColor: alpha(theme.palette.action.hover, 0.4),
-                        textAlign: 'center',
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        No {title.toLowerCase()} tasks
-                      </Typography>
-                    </Box>
-                  )}
+                {/* Scrollable area limited to VISIBLE_ROWS rows. Each column scrolls independently. */}
+                <Box
+                  sx={{
+                    maxHeight: `${containerMaxHeight}px`,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    pr: 1,
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  <Box display="flex" flexDirection="column" gap={2}>
+                    {columnTasks.length > 0 ? (
+                      columnTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onEdit={onTaskEdit}
+                          onDelete={onTaskDelete}
+                          onStatusChange={onTaskStatusChange}
+                          onView={onTaskView}
+                        />
+                      ))
+                    ) : (
+                      <Box
+                        sx={{
+                          p: 2,
+                          borderRadius: 1,
+                          backgroundColor: alpha(theme.palette.action.hover, 0.4),
+                          textAlign: 'center',
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          No {title.toLowerCase()} tasks
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
               </Paper>
             </Grid>
