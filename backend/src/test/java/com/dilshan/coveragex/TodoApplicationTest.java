@@ -5,7 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
- * Integration test for TodoApplication
+ * Integration test for com.dilshan.coveragex.TodoApplication
  * 
  * @author Dilshan
  * @version 1.0
