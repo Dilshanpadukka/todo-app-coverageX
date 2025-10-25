@@ -17,6 +17,15 @@ cd todo-app-coverageX
 
 ### Build and Run the Complete Stack
 
+**Note**: The first run may take a few minutes to download dependencies and build images.
+
+Build image and run the application in sigle command:
+```bash
+docker-compose up -d --build
+```
+
+OR
+
 First build the images:
 ```bash
 docker-compose build
