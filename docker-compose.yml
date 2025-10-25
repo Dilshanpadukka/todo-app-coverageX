@@ -1,5 +1,4 @@
 services:
-  # MySQL Database Service
   database:
     image: mysql:8.0
     container_name: todo-mysql
@@ -18,13 +17,12 @@ services:
     networks:
       - todo-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u todo_user -ptodo_password"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
 
-  # Spring Boot Backend Service
   backend:
     build:
       context: ./backend
@@ -32,22 +30,15 @@ services:
     container_name: todo-backend
     restart: unless-stopped
     environment:
-      # Database configuration
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/todo_coveragex?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: todo_user
       SPRING_DATASOURCE_PASSWORD: todo_password
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      
-      # JPA/Hibernate configuration
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
-      
-      # Application configuration
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: docker
-      
-      # Logging configuration
       LOGGING_LEVEL_COM_DILSHAN_COVERAGEX: INFO
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: WARN
       LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
@@ -59,14 +50,12 @@ services:
     networks:
       - todo-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -sSf http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep '\"status\":\"UP\"' || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 180s
 
-
-  # React.js Frontend Service
   frontend:
     build:
       context: ./frontend
@@ -74,8 +63,6 @@ services:
     container_name: todo-frontend
     restart: unless-stopped
     environment:
-      # API configuration - uses relative path since Nginx proxies /api to backend
-      # This allows the frontend to work both in Docker and locally
       VITE_API_BASE_URL: /api
     ports:
       - "3000:80"
@@ -88,16 +75,13 @@ services:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 45s
 
-
-# Named volumes for data persistence
 volumes:
   mysql_data:
     driver: local
 
-# Custom network for service communication
 networks:
   todo-network:
     driver: bridge
