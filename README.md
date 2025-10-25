@@ -4,7 +4,7 @@ A comprehensive full-stack web application for task management, built with **Spr
 
 ## Clone the Repository
 ```bash
-git clone https://github.com/dilshan/todo-app-coverageX.git
+git clone https://github.com/Dilshanpadukka/todo-app-coverageX.git
 
 cd todo-app-coverageX
 ```
