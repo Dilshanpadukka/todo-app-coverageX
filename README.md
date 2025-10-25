@@ -8,6 +8,7 @@ git clone https://github.com/Dilshanpadukka/todo-app-coverageX.git
 
 cd todo-app-coverageX
 ```
+**Note**: Change in frontend directory env file rename **.env.example** to **.env**
 
 ## 🚀 Quick Start with Docker
 
